@@ -1,0 +1,26 @@
+# 只容器化 Agent 后端（Python，构建快），电商后端继续用本地运行的实例。
+# 用法：先确保电商后端在本地 8081 端口跑着，再执行
+#   docker compose -f docker-compose.agent.yml up --build
+services:
+  agent-service:
+    build: .
+    container_name: agent
+    env_file:
+      - .env
+    environment:
+      # host.docker.internal = 从容器内访问宿主机（Docker Desktop 专用主机名）
+      ECOMMERCE_BASE_URL: http://host.docker.internal:8081
+      AGENT_SERVICE_AUTH_TOKEN: ${AGENT_SERVICE_AUTH_TOKEN:-agent-service-token}
+      AGENT_DB_PATH: /data/agent.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - agent-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  agent-data:

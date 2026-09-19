@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: ecommerce-backend (Java)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: ecommerce-backend/pom.xml
+      - name: Compile
+        run: mvn -B compile
+
+  agent:
+    name: agent (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Syntax check
+        run: python -m compileall backend

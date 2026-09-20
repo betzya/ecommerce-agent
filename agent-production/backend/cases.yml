@@ -135,7 +135,7 @@ cases:
     expected_signals:
       - 库存
       - 满 300 减 40
-      - 以商品页和结算页为准
+      - 以结算页为准
     expected_tools:
       - search_products
     expected_citations:
@@ -158,7 +158,7 @@ cases:
           userId: U1001
           fulfillmentStatus: DELIVERED
           logisticsStatus: SIGNED
-          deliveredAt: 2026-07-12T09:00:00
+          deliveredAt: NOW-3d
           returnable: true
           items:
             - productName: 降噪蓝牙耳机

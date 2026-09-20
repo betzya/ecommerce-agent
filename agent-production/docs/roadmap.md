@@ -25,13 +25,13 @@
 - [ ] 清 debug profile:`SPRING_PROFILES_ACTIVE: course-debug` → ⚠️与真实登录耦合,迁至阶段三
 - [ ] 清 debug 控制器:`CourseDebugRuntimeContextController` → ⚠️前端在调它,迁至阶段三
 - [x] 清命名痕迹:`demo-mysql`/`demo-chroma`/`agent_demo`/`ecommerce-demo`/`course-debug-agent-service` → 已统一为中性命名
-- [~] 一键启动:全栈 compose 已就位、`start.sh` 已写、删了无引用的根 `docker-compose.yml`(保留 `docker-compose.infra.yml`,运行手册/skill 引用它);剩真机验证跑通
+- [x] 一键启动:`start.sh`/`start.ps1` 已写、冗余 compose 收敛、真机验证跑通(登录/商品正常)
 - [x] 包名去 teachdemo:`com.teachdemo.ecommerce` → `com.ecommerce`(目录 + package/import + groupId 全改)
 - [x] 真实 MySQL 持久卷 + Flyway 迁移(Flyway 接管 schema,V1 建 19 表 + 2 外键,`ddl-auto=none`)
 - [ ] 反向代理 + HTTPS(nginx / 云 LB + TLS)
 - [ ] 健康探针接入编排(liveness/readiness)+ 优雅停机
 - [ ] 容器镜像版本化 + 私有仓库
-- [ ] CI/CD 骨架:build → 单测 → 镜像 → 部署
+- [x] CI/CD 骨架:GitHub Actions 跑通(Java 编译 + Python 语法检查);单测/镜像/部署后续补
 
 **关键路径(先做,不依赖真实数据)**:密钥治理 → 清 debug 痕迹 → 迁移脚本 → CI 骨架。
 

@@ -12,3 +12,5 @@ langgraph==1.1.10
 openai==2.54.0
 prometheus-client==0.26.0
 pyyaml==6.0.2
+# langchain InMemoryVectorStore.similarity_search_with_score 算余弦相似度需要 numpy
+numpy==2.2.0

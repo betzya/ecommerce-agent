@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
@@ -46,7 +46,11 @@ class EvalRunner:
         for case in selected:
             session_id = f"eval-{case['case_id']}-{run_id}"
             actual = self._run_case(case, session_id)
-            missing_signals = [signal for signal in case.get("expected_signals", []) if signal not in actual["text"]]
+            normalized_text = re.sub(r"\s+", "", actual["text"])
+            missing_signals = [
+                signal for signal in case.get("expected_signals", [])
+                if re.sub(r"\s+", "", signal) not in normalized_text
+            ]
             missing_tools = [tool for tool in case.get("expected_tools", []) if tool not in actual["tools"]]
             unexpected_tools = [tool for tool in case.get("forbidden_tools", []) if tool in actual["tools"]]
             missing_citations = [
@@ -63,7 +67,7 @@ class EvalRunner:
                 for requirement in case.get("expected_session_state", [])
                 if not self._matches_session_state(actual["session_state"], requirement)
             ]
-            forbidden_text_hits = [text for text in case.get("forbidden_text", []) if text in actual["text"]]
+            forbidden_text_hits = [text for text in case.get("forbidden_text", []) if re.sub(r"\s+", "", text) in normalized_text]
             failure_categories = self._failure_categories(
                 missing_signals=missing_signals,
                 missing_tools=missing_tools,
@@ -120,7 +124,7 @@ class EvalRunner:
                 runtime_member_level=case.get("runtime_member_level"),
                 runtime_risk_level=case.get("runtime_risk_level"),
                 user_message=case["user_message"],
-                runtime_context=case.get("runtime_context"),
+                runtime_context=self._resolve_runtime_context(case.get("runtime_context")),
             )
         )
         trace_events = trace_store.list(session_id)
@@ -159,7 +163,7 @@ class EvalRunner:
                     runtime_member_level=case.get("runtime_member_level"),
                     runtime_risk_level=case.get("runtime_risk_level"),
                     user_message=case["start_user_message"],
-                    runtime_context=case.get("runtime_context"),
+                    runtime_context=self._resolve_runtime_context(case.get("runtime_context")),
                 )
             )
             start_response = response
@@ -235,6 +239,22 @@ class EvalRunner:
         if value is None:
             return []
         return [str(value)]
+
+    @staticmethod
+    def _resolve_runtime_context(runtime_context: dict[str, Any]) -> dict[str, Any]:
+        """把测试数据里的相对日期标记(如 NOW-3d)解析成真实日期,避免写死日期随时间过期。"""
+        if not runtime_context:
+            return runtime_context
+        resolved = json.loads(json.dumps(runtime_context))
+        today = date.today()
+        for order in resolved.get("currentUserOrders", []):
+            if not isinstance(order, dict):
+                continue
+            delivered = order.get("deliveredAt")
+            match = re.fullmatch(r"NOW-(\d+)d", str(delivered)) if delivered is not None else None
+            if match:
+                order["deliveredAt"] = (today - timedelta(days=int(match.group(1)))).isoformat()
+        return resolved
 
     @staticmethod
     def _contains_any(values: list[str], expected: str) -> bool:
